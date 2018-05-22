@@ -2,10 +2,16 @@
 #define MODBUS_H
 
 #include <iostream>
+#include <cstdlib>
 #include <string>
+#include <cstring>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <vector>
+#include <algorithm>
+#include <array>
+#include <iterator>
 #include "modbus_exception.h"
 using namespace std;
 
@@ -36,6 +42,9 @@ enum {
 	EX_GATEWAY_PROBLEM_DEVIVE 	= 0x0B, // Target Device Failed to Response
 };
 
+extern uint8_t			_modbus_header[];
+extern uint8_t			_npdu_header[];
+extern uint8_t			_data_header[];
 
 /**
  * @class Modbus
@@ -53,7 +62,7 @@ private:
 	int 			_messageID;
 	int 			_slaveID;
 	string 			_modbus_trame;
-	
+
 	struct sockaddr_in _server;
 	
 	ssize_t ModbusSend(uint8_t *to_send, int length);
@@ -68,6 +77,8 @@ public:
 	void ModbusClose();
 	
 	void ModbusSetSlaveID(int id);
+
+
 
 	string GetMessageToSend();
 	void SetMessageToSend(string& message);
