@@ -2,7 +2,7 @@
 
 param=$1;
 repository="";
-remote="";
+remote="origin";
 
 do_commit(){
 	git add .
