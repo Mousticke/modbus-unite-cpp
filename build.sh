@@ -25,7 +25,7 @@ do_Make_cm(){
 	git add .
 	echo "Message du commit"
 	read commitMessage
-	git commit -m $commitMessage
+	git commit -m "${commitMessage}"
 }
 
 if  [[ $1 = "-cm" ]]; then
