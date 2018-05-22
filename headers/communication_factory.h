@@ -17,7 +17,6 @@ private:
 public:
 	CommunicationFactory(int transmitterStation,int transmitterNetwork,int transmitterPort,int receiverStation,int receiverNetwork,int receiverPort);
 	~CommunicationFactory();
-
 	vector<uint8_t> generateWriteVar(int startAddr, int* values);
 };
 

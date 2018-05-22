@@ -2,7 +2,16 @@
 using namespace std;
 
 
-
+/**
+ * @brief Constructeur de la class CommunicationFactory
+ * 
+ * @param transmitterStation [description]
+ * @param transmitterNetwork [description]
+ * @param transmitterPort [description]
+ * @param receiverStation [description]
+ * @param receiverNetwork [description]
+ * @param receiverPort [description]
+ */
 CommunicationFactory::CommunicationFactory(
 	int transmitterStation, 
 	int transmitterNetwork, 
@@ -18,22 +27,37 @@ CommunicationFactory::CommunicationFactory(
 	_receiverPort = (uint8_t)receiverPort;
 }
 
+/**
+ * @brief Destructor of the class CommunicationFactory
+ */
 CommunicationFactory::~CommunicationFactory(){
 }
 
+/**
+ * @brief Generate a write var
+ * @details Generate the frame for the write var.
+ * 
+ * @param startAddr [description]
+ * @param values [description]
+ * 
+ * @return vector<uint8_t>
+ */
 vector<uint8_t> CommunicationFactory::generateWriteVar(int startAddr, int* values){
+	//Header get from extern defined in modbus.h
 	uint8_t _modbus_header[] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x13, 0x00};
 	uint8_t _npdu_header[] = {0xf0, 0x00, 0x00, 0x00, 0x00};
 	uint8_t _data_header[] = {0x00, 0x00, 0x00, 0x00};
+
+	//Declare vector of bytes
 	vector<uint8_t> stream;
 	vector<uint8_t> modbus_header (_modbus_header, _modbus_header + sizeof(_modbus_header)/sizeof(*_modbus_header));
 	vector<uint8_t> npdu_header (_npdu_header, _npdu_header + sizeof(_npdu_header)/sizeof(*_npdu_header));
 	vector<uint8_t> data_header (_data_header, _data_header + sizeof(_data_header)/sizeof(*_data_header));
-	int size_array = sizeof(values) / sizeof(*values);
-	vector<uint8_t> values_bytes (size_array * 2, 0x00);
-	int bytes_count = 0;
 	vector<uint8_t> end_of_frame;
 	vector<uint8_t> frame;
+	int bytes_count = 0;
+	int size_array = sizeof(values) / sizeof(*values);
+	vector<uint8_t> values_bytes (size_array * 2, 0x00);
 
 	npdu_header[1] = _transmitterStation;
     npdu_header[2] = (uint8_t)(((_transmitterNetwork & 0x0F) << 4) + (_transmitterPort & 0x0F));
@@ -66,9 +90,21 @@ vector<uint8_t> CommunicationFactory::generateWriteVar(int startAddr, int* value
     stream.insert(stream.end(), modbus_header.begin(), modbus_header.end());
     stream.insert(stream.end(), end_of_frame.begin(), end_of_frame.end());
 
-    //uint8_t* frame = (uint8_t*)malloc(stream.size()*sizeof(*frame));
-    //copy(stream.begin(), stream.end(), frame);
     frame = stream;
+    
     stream.clear();
+    modbus_header.clear();
+    npdu_header.clear();
+    data_header.clear();
+    values_bytes.clear();
+    end_of_frame.clear();
+    
+    vector<uint8_t>(modbus_header).swap(modbus_header);
+    vector<uint8_t>(stream).swap(stream);
+    vector<uint8_t>(npdu_header).swap(npdu_header);
+    vector<uint8_t>(data_header).swap(data_header);
+    vector<uint8_t>(values_bytes).swap(values_bytes);
+	vector<uint8_t>(end_of_frame).swap(end_of_frame);
+
 	return frame;
 }

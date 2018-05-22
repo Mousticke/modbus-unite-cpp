@@ -75,11 +75,7 @@ public:
 	~Modbus();
 	bool ModbusConnected();
 	void ModbusClose();
-	
 	void ModbusSetSlaveID(int id);
-
-
-
 	string GetMessageToSend();
 	void SetMessageToSend(string& message);
 };
