@@ -9,14 +9,6 @@ int main(int argc, char const *argv[])
 	Modbus* modbus = new Modbus(s, 502);
 	
 	modbus->ModbusConnected();
-	modbus->SetMessageToSend(message_to_server);
-
-	std::string message_to_send = modbus->GetMessageToSend();
-	std::cout << "To send : " << message_to_send.c_str() << std::endl;
-	modbus->ModbusSend();
-
-	modbus->ModbusReceive();
-	std::string message_response = modbus->GetMessageFromAutomate();
-	std::cout << "Response : " << message_response.c_str() << std::endl;
+	
 	return 0;
 }

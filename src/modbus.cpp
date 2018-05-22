@@ -1,5 +1,6 @@
 #include "../headers/modbus.h"
 #include <arpa/inet.h>
+using namespace std;
 
 /**
 * Main contructor of Modbus
@@ -10,6 +11,8 @@
 Modbus::Modbus(const char* host, int port){
 	HOST = host;
 	PORT = port;
+	_slaveID  =  1;
+	_messageID = 1;
 	_connected = 1;
 }
 
@@ -30,25 +33,33 @@ Modbus::~Modbus(void){
 }
 
 /**
- * @brief set _connected true is socket is connected
+ * @brief set slave id 
+ * @param id id of the slave to set in the server
+ */
+void Modbus::ModbusSetSlaveID(int id){
+	_slaveID = id;
+}
+
+/**
+ * @brief set _connected true if socket is connected
  * @return bool 
  */
 bool Modbus::ModbusConnected(){
 	if(PORT == 0){
-		std::cout << "Missing port or host" << std::endl;
+		cout << "Missing port or host" << endl;
 		_connected = false;
 		return _connected;
 	}else{
-		std::cout << "Found host : " << HOST << " and port : " << PORT << std::endl;
+		cout << "Found host : " << HOST << " and port : " << PORT << endl;
 	}
 
 	_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if(_socket == -1){
-		std::cout << "Error opening socket" << std::endl;
+		cout << "Error opening socket" << endl;
 		_connected = false;
 		return _connected;
 	}else{
-		std::cout << "Socket opened successfully" <<std::endl;
+		cout << "Socket opened successfully" << endl;
 	}
 
 	_server.sin_family = AF_INET;
@@ -56,12 +67,12 @@ bool Modbus::ModbusConnected(){
 	_server.sin_port = htons(PORT);
 
 	if(connect(_socket, (struct sockaddr*)&_server, sizeof(_server)) < 0){
-		std::cout << "Connection error" << std::endl;
+		cout << "Connection error" << endl;
 		_connected = false;
 		return _connected;
 	}
 
-	std::cout << "Connected" << std::endl;
+	cout << "Connected" << endl;
 	_connected = true;
 	return true;
 }
@@ -71,19 +82,30 @@ bool Modbus::ModbusConnected(){
  */
 void Modbus::ModbusClose(){
 	close(_socket);
-	std::cout << "Socket closed" << std::endl;
+	cout << "Socket closed" << endl;
+}
+
+
+ssize_t Modbus::ModbusSend(uint8_t *to_send, int length){
+	_messageID++;
+	return send(_socket, to_send, (size_t)length, 0);
+}
+
+
+ssize_t Modbus::ModbusReceive(uint8_t *buffer){
+	return recv(_socket, (char *)buffer, 1024, 0);
 }
 
 /**
  * @brief Get the modbus trame
- * @return  message
+ * @return  message  if everything is fine. Otherwise an error
  */
-std::string Modbus::GetMessageToSend(){
+string Modbus::GetMessageToSend(){
 	if(_connected == 1){
-		return modbus_trame;
+		return _modbus_trame;
 	}
 	else{
-		std::string error_message("Can't get the message to send. Socket is not connected.");
+		string error_message("Can't get the message to send. Socket is not connected.");
 		return error_message;
 	}
 }
@@ -92,49 +114,11 @@ std::string Modbus::GetMessageToSend(){
  * @brief Set the message to send
  * @param message
  */
-void Modbus::SetMessageToSend(std::string& message){
+void Modbus::SetMessageToSend(string& message){
 	if(_connected == 1){
-		modbus_trame = message;
+		_modbus_trame = message;
 	}
 	else{
 		return;
-	}
-}
-
-/**
- * @brief Send the modbus yrame
- */
-void Modbus::ModbusSend(){
-	if(_connected == 1){
-		send(_socket, modbus_trame.c_str(), modbus_trame.length(), 0);
-	}
-	else{
-		return;
-	}
-}
-
-/**
- * @brief Receive the message in buffer from the server after we send the trame. 
- */
-void Modbus::ModbusReceive(){
-	if(_connected == 1){
-		recv(_socket, buffer, strlen(buffer), 0);
-	}else{
-		return;
-	}
-
-}
-
-/**
- * @brief Fet the message we have from the automate
- * @return buffer is everything is fine. Otherwise an error
- */
-std::string Modbus::GetMessageFromAutomate(){
-	if(_connected == 1){
-		return buffer;
-	}
-	else{
-		std::string error_message("Can't get the message from automate. Socket is not connected.");
-		return error_message;
 	}
 }
