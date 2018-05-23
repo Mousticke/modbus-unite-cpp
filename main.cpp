@@ -28,5 +28,8 @@ int main(int argc, char const *argv[])
             static_cast<unsigned int>(genWriteVar[i]) << std::endl;
 	}
 
+	delete modbus;
+	delete factory;
+	
 	return 0;
 }
