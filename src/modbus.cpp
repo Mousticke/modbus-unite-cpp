@@ -96,10 +96,19 @@ void Modbus::ModbusClose(){
  * 
  * @return integer positif or negative
  */
-ssize_t Modbus::ModbusSend(uint8_t *to_send, int length){
+ssize_t Modbus::ModbusSend(vector<uint8_t> to_send, size_t length){
 	_messageID++;
-	return send(_socket, to_send, (size_t)length, 0);
+	ssize_t result = send(_socket, static_cast<const void*>(to_send.data()), length, 0);
+	if(result < 0)
+		cout << "Something went wrong in the send function." << endl;
+	else{
+		cout << length << endl;
+		cout << "Send function successfull" << endl;
+	}
+	return result;
+
 }
+
 
 /**
  * @brief Use recv from socket lib
@@ -108,8 +117,21 @@ ssize_t Modbus::ModbusSend(uint8_t *to_send, int length){
  * @param buffer message from the server
  * @return integer positif or negative
  */
-ssize_t Modbus::ModbusReceive(uint8_t *buffer){
-	return recv(_socket, (char *)buffer, 1024, 0);
+ssize_t Modbus::ModbusReceive(){
+	ssize_t res = recv(_socket, _buffer.data(), 5000, 0);
+	if(res != 0){
+		_buffer.resize(res);
+	}else{
+		cout << "Something went wrong in the receive function" << endl;
+	}
+	cout << res << endl;
+	return res;
+}
+
+void Modbus::printVector(){
+	for(vector<uint8_t>::iterator it = _buffer.begin(); it != _buffer.end(); ++it){
+		cout << *it << endl;
+	}
 }
 
 /**

@@ -62,11 +62,10 @@ private:
 	int 			_messageID;
 	int 			_slaveID;
 	string 			_modbus_trame;
+	vector<uint8_t> _buffer;
 
 	struct sockaddr_in _server;
 	
-	ssize_t ModbusSend(uint8_t *to_send, int length);
-	ssize_t ModbusReceive(uint8_t *buffer); 
 	void ModbusErrorHanhle(uint8_t *msg, int func);
 
 public:
@@ -75,9 +74,12 @@ public:
 	~Modbus();
 	bool ModbusConnected();
 	void ModbusClose();
+	ssize_t ModbusSend(vector<uint8_t> to_send, size_t length);
+	ssize_t ModbusReceive(); 
 	void ModbusSetSlaveID(int id);
 	string GetMessageToSend();
 	void SetMessageToSend(string& message);
+	void printVector();
 };
 
 #endif // MODBUS_H

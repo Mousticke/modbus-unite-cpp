@@ -47,17 +47,20 @@ vector<uint8_t> CommunicationFactory::generateWriteVar(int startAddr, int* value
 	uint8_t _modbus_header[] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x13, 0x00};
 	uint8_t _npdu_header[] = {0xf0, 0x00, 0x00, 0x00, 0x00};
 	uint8_t _data_header[] = {0x00, 0x00, 0x00, 0x00};
+    //APDU : Code requete + Cat 6 + seg + type
+	uint8_t _apdu_header[] = {0x37, 0x06, 0x68, 0x07};
 
-	//Declare vector of bytes
+    //Declare vector of bytes
 	vector<uint8_t> stream;
 	vector<uint8_t> modbus_header (_modbus_header, _modbus_header + sizeof(_modbus_header)/sizeof(*_modbus_header));
 	vector<uint8_t> npdu_header (_npdu_header, _npdu_header + sizeof(_npdu_header)/sizeof(*_npdu_header));
+    vector<uint8_t> apdu_header (_apdu_header, _apdu_header + sizeof(_apdu_header)/sizeof(*_apdu_header));
 	vector<uint8_t> data_header (_data_header, _data_header + sizeof(_data_header)/sizeof(*_data_header));
 	vector<uint8_t> end_of_frame;
 	vector<uint8_t> frame;
 	int bytes_count = 0;
-	int size_array = sizeof(values) / sizeof(*values);
-	vector<uint8_t> values_bytes (size_array * 2, 0x00);
+	int size_array = (sizeof(values) / sizeof(values[0])) + 1;
+	vector<uint8_t> values_bytes ((size_array) * 2, 0x00);
 
 	npdu_header[1] = _transmitterStation;
     npdu_header[2] = (uint8_t)(((_transmitterNetwork & 0x0F) << 4) + (_transmitterPort & 0x0F));
@@ -69,15 +72,17 @@ vector<uint8_t> CommunicationFactory::generateWriteVar(int startAddr, int* value
     data_header[3] = (uint8_t)((size_array & 0xFF00) >> 8);
 
     int counter = 0;
-    for (int data=0; data<size_array; data++) {
-    	values_bytes[counter] = (data & 0x00FF);
-    	values_bytes[counter + 1] = ((data & 0xFF00) >> 16);
+    for (int data=0; data<(size_array); data++) {
+    	values_bytes[counter] = (values[data] & 0x00FF);
+    	values_bytes[counter + 1] = ((values[data] & 0xFF00) >> 16);
     	counter += 2;
     }
 	
-	stream.reserve(npdu_header.size() + data_header.size());
+	stream.reserve(npdu_header.size() + apdu_header.size() + data_header.size() + values_bytes.size());
     stream.insert(stream.end(), npdu_header.begin(), npdu_header.end());
+    stream.insert(stream.end(), apdu_header.begin(), apdu_header.end());
     stream.insert(stream.end(), data_header.begin(), data_header.end());
+    stream.insert(stream.end(), values_bytes.begin(), values_bytes.end());
     bytes_count = stream.size();
     end_of_frame = stream;
 
@@ -92,9 +97,10 @@ vector<uint8_t> CommunicationFactory::generateWriteVar(int startAddr, int* value
 
     frame = stream;
     
-    stream.clear();
+    /*stream.clear();
     modbus_header.clear();
     npdu_header.clear();
+    apdu_header.clear();
     data_header.clear();
     values_bytes.clear();
     end_of_frame.clear();
@@ -102,9 +108,9 @@ vector<uint8_t> CommunicationFactory::generateWriteVar(int startAddr, int* value
     vector<uint8_t>(modbus_header).swap(modbus_header);
     vector<uint8_t>(stream).swap(stream);
     vector<uint8_t>(npdu_header).swap(npdu_header);
+    vector<uint8_t>(apdu_header).swap(apdu_header);
     vector<uint8_t>(data_header).swap(data_header);
     vector<uint8_t>(values_bytes).swap(values_bytes);
-	vector<uint8_t>(end_of_frame).swap(end_of_frame);
-
+	vector<uint8_t>(end_of_frame).swap(end_of_frame);*/
 	return frame;
 }
