@@ -78,8 +78,10 @@ public:
 	ssize_t ModbusReceive(); 
 	void ModbusSetSlaveID(int id);
 	string GetMessageToSend();
+	vector<uint8_t> GetMessageFromAutomate();
 	void SetMessageToSend(string& message);
-	void printVector();
+	void clear();
+	int GetMessageID();
 };
 
 #endif // MODBUS_H

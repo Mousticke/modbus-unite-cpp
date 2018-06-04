@@ -98,17 +98,30 @@ void Modbus::ModbusClose(){
  */
 ssize_t Modbus::ModbusSend(vector<uint8_t> to_send, size_t length){
 	_messageID++;
+	/*for (vector<uint8_t>::const_iterator i = to_send.begin(); i != to_send.end(); ++i){
+    	cout << (int)*i << ' ';
+	}*/
 	ssize_t result = send(_socket, static_cast<const void*>(to_send.data()), length, 0);
 	if(result < 0)
 		cout << "Something went wrong in the send function." << endl;
 	else{
-		cout << length << endl;
 		cout << "Send function successfull" << endl;
 	}
 	return result;
 
 }
 
+int Modbus::GetMessageID(){
+	return _messageID;
+}
+
+vector<uint8_t> Modbus::GetMessageFromAutomate(){
+	return _buffer;
+}
+
+void Modbus::clear(){
+	_buffer.clear();
+}
 
 /**
  * @brief Use recv from socket lib
@@ -118,20 +131,16 @@ ssize_t Modbus::ModbusSend(vector<uint8_t> to_send, size_t length){
  * @return integer positif or negative
  */
 ssize_t Modbus::ModbusReceive(){
-	ssize_t res = recv(_socket, _buffer.data(), 5000, 0);
-	if(res != 0){
+	Modbus::clear();
+	_buffer.resize(261, 0x00);
+	ssize_t res = recv(_socket, _buffer.data(), _buffer.size(), 0);
+	if(res >= 0){
 		_buffer.resize(res);
+		cout << "Received a frame " << endl;
 	}else{
 		cout << "Something went wrong in the receive function" << endl;
 	}
-	cout << res << endl;
 	return res;
-}
-
-void Modbus::printVector(){
-	for(vector<uint8_t>::iterator it = _buffer.begin(); it != _buffer.end(); ++it){
-		cout << *it << endl;
-	}
 }
 
 /**

@@ -10,6 +10,12 @@ main: main.o modbus.o communication_factory.o
 main.o: main.cpp
 	$(CC) $(CFLAGS) main.cpp
 
+server: server.o modbus.o communication_factory.o
+	$(CC) server.o modbus.o communication_factory.o -o server
+
+server.o: server.cpp
+	$(CC) $(CFLAGS) server.cpp
+
 modbus.o: headers/modbus.h src/modbus.cpp
 	$(CC) $(CFLAGS) src/modbus.cpp
 
