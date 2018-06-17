@@ -58,30 +58,25 @@ private:
 	const char* 	HOST;
 	int 			PORT;
 	int 			_socket;
+	int 			_socketserver;
 	bool 			_connected;
-	int 			_messageID;
-	int 			_slaveID;
-	string 			_modbus_trame;
 	vector<uint8_t> _buffer;
-
-	struct sockaddr_in _server;
+	struct sockaddr_in _server, _server_server;
 	
 	void ModbusErrorHanhle(uint8_t *msg, int func);
+	void clear();
 
 public:
 	Modbus(const char* host, int port);
 	Modbus(const char* host);
 	~Modbus();
 	bool ModbusConnected();
+	bool ModbusConnectedServer();
 	void ModbusClose();
 	ssize_t ModbusSend(vector<uint8_t> to_send, size_t length);
-	ssize_t ModbusReceive(); 
-	void ModbusSetSlaveID(int id);
-	string GetMessageToSend();
+	ssize_t ModbusReceive();
 	vector<uint8_t> GetMessageFromAutomate();
-	void SetMessageToSend(string& message);
-	void clear();
-	int GetMessageID();
+	void threadRequest(vector<uint8_t> to_send, size_t length);
 };
 
 #endif // MODBUS_H

@@ -11,8 +11,6 @@ using namespace std;
 Modbus::Modbus(const char* host, int port){
 	HOST = host;
 	PORT = port;
-	_slaveID  =  1;
-	_messageID = 1;
 	_connected = 1;
 }
 
@@ -32,13 +30,6 @@ Modbus::Modbus(const char* host){
 Modbus::~Modbus(void){
 }
 
-/**
- * @brief set slave id 
- * @param id id of the slave to set in the server
- */
-void Modbus::ModbusSetSlaveID(int id){
-	_slaveID = id;
-}
 
 /**
  * @brief Connect the socket
@@ -53,7 +44,6 @@ bool Modbus::ModbusConnected(){
 	}else{
 		cout << "Found host : " << HOST << " and port : " << PORT << endl;
 	}
-
 	_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if(_socket == -1){
 		cout << "Error opening socket" << endl;
@@ -72,11 +62,50 @@ bool Modbus::ModbusConnected(){
 		_connected = false;
 		return _connected;
 	}
-
 	cout << "Connected" << endl;
 	_connected = true;
 	return true;
 }
+
+/**
+ * @brief Server create
+ * @details Create a connection between client and server with TCP protocol
+ * @return bool
+ */
+bool Modbus::ModbusConnectedServer(){
+	if(PORT == 0){
+		cout << "Missing port" << endl;
+		return false;
+	}
+	_socketserver = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if(_socketserver == -1){
+		cout << "Error opening socket" << endl;
+		return false;
+	}else{
+		cout << "Socket opened successfully" << endl;
+	}
+	bzero((char*) &_server_server, sizeof(_server_server));
+	_server_server.sin_family = AF_INET;
+	_server_server.sin_addr.s_addr = inet_addr(HOST);
+	_server_server.sin_port = htons(PORT);
+	if(bind(_socketserver, (struct sockaddr *)&_server_server, sizeof(_server_server)) < 0){
+        cerr << "Cannot bind" << endl;
+        return false;
+    }
+    listen(_socketserver, 5);
+    while(true){
+    	socklen_t len = sizeof(_server);
+    	int connFd = accept(_socketserver, (struct sockaddr *)&_server, &len);
+    	if (connFd < 0){
+            cerr << "Cannot accept connection" << endl;
+            return 0;
+        }else{
+            cout << "Connection successful" << endl;
+        }
+    }
+    return true;
+}
+
 
 /**
  * @brief Close connexion
@@ -90,17 +119,11 @@ void Modbus::ModbusClose(){
 /**
  * @brief Use send from socket lib
  * @details send the message to the server
- * 
  * @param to_send message to send
  * @param length length of the message
- * 
  * @return integer positif or negative
  */
 ssize_t Modbus::ModbusSend(vector<uint8_t> to_send, size_t length){
-	_messageID++;
-	/*for (vector<uint8_t>::const_iterator i = to_send.begin(); i != to_send.end(); ++i){
-    	cout << (int)*i << ' ';
-	}*/
 	ssize_t result = send(_socket, static_cast<const void*>(to_send.data()), length, 0);
 	if(result < 0)
 		cout << "Something went wrong in the send function." << endl;
@@ -111,28 +134,21 @@ ssize_t Modbus::ModbusSend(vector<uint8_t> to_send, size_t length){
 
 }
 
-int Modbus::GetMessageID(){
-	return _messageID;
-}
-
-vector<uint8_t> Modbus::GetMessageFromAutomate(){
-	return _buffer;
-}
-
-void Modbus::clear(){
-	_buffer.clear();
+void Modbus::threadRequest(vector<uint8_t> to_send, size_t length){
+	Modbus::ModbusSend(to_send, length);
+	Modbus::ModbusReceive();
 }
 
 /**
  * @brief Use recv from socket lib
  * @details receive the message from the API
- * 
  * @param buffer message from the server
  * @return integer positif or negative
  */
 ssize_t Modbus::ModbusReceive(){
 	Modbus::clear();
 	_buffer.resize(261, 0x00);
+	cout << "Receiving frame..." << endl;
 	ssize_t res = recv(_socket, _buffer.data(), _buffer.size(), 0);
 	if(res >= 0){
 		_buffer.resize(res);
@@ -144,30 +160,17 @@ ssize_t Modbus::ModbusReceive(){
 }
 
 /**
- * @brief Get the modbus trame
- * @return  message  if everything is fine. Otherwise an error
+ * @brief Get message from automate
+ * @details get the vector of bytes of the message received by the socket
+ * @return vector
  */
-string Modbus::GetMessageToSend(){
-	if(_connected == 1){
-		return _modbus_trame;
-	}
-	else{
-		string error_message("Can't get the message to send. Socket is not connected.");
-		return error_message;
-	}
+vector<uint8_t> Modbus::GetMessageFromAutomate(){
+	return _buffer;
 }
-
+/**************************PRIVATE ************************************************/
 /**
- * @brief Set the message to send
- * @details set the message to send to the server with the tcp protocol.
- * 
- * @param message 
+ * @brief clear vector of receive message
  */
-void Modbus::SetMessageToSend(string& message){
-	if(_connected == 1){
-		_modbus_trame = message;
-	}
-	else{
-		return;
-	}
+void Modbus::clear(){
+	_buffer.clear();
 }
